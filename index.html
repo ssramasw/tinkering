@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Field Service Policy Intelligence - Prototype</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Salesforce Sans', Arial, sans-serif;
+            background-color: #f3f2f2;
+            color: #181818;
+            line-height: 1.5;
+        }
+
+        .header {
+            background-color: #fff;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #dddbda;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 300;
+            color: #080707;
+        }
+
+        .breadcrumb {
+            font-size: 0.875rem;
+            color: #706e6b;
+            margin-top: 0.5rem;
+        }
+
+        .breadcrumb a {
+            color: #0070d2;
+            text-decoration: none;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #dddbda;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 400;
+            color: #080707;
+        }
+
+        .hero-section {
+            display: flex;
+            gap: 3rem;
+            align-items: center;
+            margin: 2rem 0;
+        }
+
+        .score-circle {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            flex-shrink: 0;
+        }
+
+        .score-number {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3.5rem;
+            font-weight: 200;
+            color: #f59331;
+        }
+
+        .score-label {
+            position: absolute;
+            top: 68%;
+            left: 50%;
+            transform: translate(-50%, 0);
+            font-size: 0.875rem;
+            color: #706e6b;
+        }
+
+        .score-status {
+            position: absolute;
+            top: 78%;
+            left: 50%;
+            transform: translate(-50%, 0);
+            font-size: 0.75rem;
+            color: #fe9339;
+            font-weight: 600;
+        }
+
+        .hero-content {
+            flex: 1;
+        }
+
+        .hero-title {
+            font-size: 1.5rem;
+            font-weight: 300;
+            margin-bottom: 1rem;
+            color: #080707;
+        }
+
+        .hero-subtitle {
+            font-size: 1rem;
+            color: #3e3e3c;
+            margin-bottom: 1.5rem;
+        }
+
+        .data-pills {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .pill {
+            background: #f3f2f2;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #3e3e3c;
+        }
+
+        .pill strong {
+            color: #080707;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #fff 0%, #fafaf9 100%);
+            border-left: 4px solid #f59331;
+            padding: 1.5rem;
+            border-radius: 4px;
+            position: relative;
+            transition: transform 0.2s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .metric-icon {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 2rem;
+            opacity: 0.3;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 200;
+            color: #080707;
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: #706e6b;
+            margin-bottom: 0.75rem;
+        }
+
+        .metric-comparison {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: #fe9339;
+            font-weight: 600;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            border: 1px solid transparent;
+            font-size: 0.875rem;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-brand {
+            background-color: #0070d2;
+            color: #fff;
+            border-color: #0070d2;
+        }
+
+        .btn-brand:hover {
+            background-color: #005fb2;
+        }
+
+        .btn-neutral {
+            background-color: #fff;
+            color: #0070d2;
+            border-color: #dddbda;
+        }
+
+        .btn-success {
+            background-color: #4bca81;
+            color: #fff;
+            border-color: #4bca81;
+        }
+
+        .finding-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .finding-card {
+            background: #fff4e5;
+            border-left: 4px solid #fe9339;
+            padding: 1.5rem;
+            border-radius: 4px;
+        }
+
+        .finding-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .finding-icon {
+            font-size: 2rem;
+        }
+
+        .finding-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #080707;
+        }
+
+        .finding-stat {
+            font-size: 1.5rem;
+            font-weight: 300;
+            color: #fe9339;
+            margin-bottom: 0.5rem;
+        }
+
+        .finding-description {
+            font-size: 0.875rem;
+            color: #3e3e3c;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+
+        .comparison-table th {
+            background: #f3f2f2;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #dddbda;
+            font-size: 0.875rem;
+        }
+
+        .comparison-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #dddbda;
+        }
+
+        .weight-visual {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .weight-bar {
+            flex: 1;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .weight-bar-fill {
+            height: 100%;
+            background: #0070d2;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        .arrow-change {
+            color: #4bca81;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .work-rule-card {
+            background: #fff;
+            border: 2px solid #4bca81;
+            border-radius: 4px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            position: relative;
+        }
+
+        .new-badge {
+            position: absolute;
+            top: -10px;
+            right: 1rem;
+            background: #4bca81;
+            color: #fff;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .rule-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .rule-icon {
+            font-size: 2rem;
+        }
+
+        .rule-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #080707;
+        }
+
+        .rule-impact {
+            display: inline-block;
+            background: #d8f3dc;
+            color: #1e7e34;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .impact-hero {
+            background: linear-gradient(135deg, #d8f3dc 0%, #4bca81 100%);
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .impact-title {
+            font-size: 1.5rem;
+            font-weight: 300;
+            color: #1e7e34;
+            margin-bottom: 2rem;
+        }
+
+        .impact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 2rem;
+        }
+
+        .impact-item {
+            background: rgba(255,255,255,0.9);
+            padding: 1.5rem;
+            border-radius: 8px;
+        }
+
+        .impact-value {
+            font-size: 2.5rem;
+            font-weight: 200;
+            color: #1e7e34;
+            margin-bottom: 0.5rem;
+        }
+
+        .impact-label {
+            font-size: 0.875rem;
+            color: #3e3e3c;
+            font-weight: 600;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .deploy-option {
+            background: #fff;
+            border: 2px solid #dddbda;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .deploy-option:hover {
+            border-color: #0070d2;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        .deploy-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .deploy-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #080707;
+            margin-bottom: 1rem;
+        }
+
+        .deploy-description {
+            font-size: 0.875rem;
+            color: #706e6b;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        svg circle {
+            fill: none;
+            stroke: #e0e0e0;
+            stroke-width: 12;
+        }
+
+        svg circle.progress {
+            stroke: #f59331;
+            stroke-dasharray: 520;
+            stroke-dashoffset: 165;
+            stroke-linecap: round;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f3f2f2;
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: #706e6b;
+            font-size: 0.875rem;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: #080707;
+        }
+    </style>
+</head>
+<body>
+    <!-- Screen 1: Health Dashboard -->
+    <div id="screen1" class="screen active">
+        <div class="header">
+            <h1>Policy Intelligence</h1>
+            <div class="breadcrumb">
+                <a href="#">Setup</a> / <a href="#">Field Service Settings</a> / <a href="#">Scheduling Policies</a> / Policy Intelligence
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="card">
+                <div class="hero-section">
+                    <div class="score-circle">
+                        <svg width="180" height="180">
+                            <circle cx="90" cy="90" r="80" />
+                            <circle cx="90" cy="90" r="80" class="progress" />
+                        </svg>
+                        <div class="score-number">68</div>
+                        <div class="score-label">Health Score</div>
+                        <div class="score-status">Needs Attention</div>
+                    </div>
+
+                    <div class="hero-content">
+                        <div class="hero-title">Your scheduling policy can be optimized</div>
+                        <div class="hero-subtitle">
+                            Agentforce analyzed 6 months of data and found opportunities to reduce travel time, eliminate idle time, cut overtime, and save $11,600/month.
+                        </div>
+                        <div class="data-pills">
+                            <div class="pill"><strong>12,450</strong> work orders analyzed</div>
+                            <div class="pill"><strong>2,890</strong> manual overrides</div>
+                            <div class="pill"><strong>145</strong> technicians</div>
+                            <div class="pill"><strong>Nov 2025 - Apr 2026</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">What's Not Working</div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon">⚠️</div>
+                        <div class="metric-value">34%</div>
+                        <div class="metric-label">Manual Override Rate</div>
+                        <div class="metric-comparison">
+                            <span>↑ 12% vs. industry avg</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-icon">🚗</div>
+                        <div class="metric-value">42min</div>
+                        <div class="metric-label">Avg Travel Time</div>
+                        <div class="metric-comparison">
+                            <span>↑ 14min vs. industry avg</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-icon">🔧</div>
+                        <div class="metric-value">73%</div>
+                        <div class="metric-label">First-Time Fix Rate</div>
+                        <div class="metric-comparison">
+                            <span>↓ 12% below target</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-icon">⏰</div>
+                        <div class="metric-value">+18%</div>
+                        <div class="metric-label">Overtime Hours</div>
+                        <div class="metric-comparison">
+                            <span>Above target</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-brand" onclick="showScreen(2)">See What Agentforce Recommends</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 2: Analysis Results -->
+    <div id="screen2" class="screen">
+        <div class="header">
+            <h1>Agentforce Recommendations</h1>
+            <div class="breadcrumb">
+                <a href="#" onclick="showScreen(1)">Policy Intelligence</a> / Recommendations
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="card">
+                <div style="background: #e8f4f8; border-left: 4px solid #0070d2; padding: 1.5rem; border-radius: 4px; margin-bottom: 2rem;">
+                    <strong>What Agentforce Found:</strong> 2 objectives need tuning + 3 objectives you should enable that aren't configured yet
+                </div>
+
+                <div class="card-header">
+                    <div class="card-title">Tune Existing Weights (2)</div>
+                    <div style="font-size: 0.875rem; color: #706e6b;">Objectives you're using but need adjustment</div>
+                </div>
+
+                <div class="finding-grid">
+                    <div class="finding-card">
+                        <div class="finding-header">
+                            <div class="finding-icon">🚗</div>
+                            <div class="finding-title">Travel Time Weight Too Low</div>
+                        </div>
+                        <div class="finding-stat">+35% excess drive time</div>
+                        <div class="finding-description">
+                            Current weight: 20. Techs are driving too far between jobs. Should be 35.
+                        </div>
+                    </div>
+
+                    <div class="finding-card">
+                        <div class="finding-header">
+                            <div class="finding-icon">🎯</div>
+                            <div class="finding-title">Skills Weight Too High</div>
+                        </div>
+                        <div class="finding-stat">40 → 25 recommended</div>
+                        <div class="finding-description">
+                            System picks perfect skill match over nearby tech, causing long drives for minor skill differences.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Enable New Objectives (3)</div>
+                    <div style="font-size: 0.875rem; color: #706e6b;">Objectives not configured but should be based on your data</div>
+                </div>
+
+                <div class="finding-grid">
+                    <div class="finding-card" style="background: #d8f3dc; border-left-color: #4bca81;">
+                        <div class="new-badge">ENABLE</div>
+                        <div class="finding-header">
+                            <div class="finding-icon">⏰</div>
+                            <div class="finding-title">Minimize Overtime</div>
+                        </div>
+                        <div class="finding-stat">18% over target</div>
+                        <div class="finding-description">
+                            Currently not configured. Techs working late 4-5 days/week. Recommend weight: 20.
+                        </div>
+                    </div>
+
+                    <div class="finding-card" style="background: #d8f3dc; border-left-color: #4bca81;">
+                        <div class="new-badge">ENABLE</div>
+                        <div class="finding-header">
+                            <div class="finding-icon">📊</div>
+                            <div class="finding-title">Minimize Gaps</div>
+                        </div>
+                        <div class="finding-stat">2.3 hrs idle time/day</div>
+                        <div class="finding-description">
+                            Currently not configured. Techs paid to wait between appointments. Recommend weight: 25.
+                        </div>
+                    </div>
+
+                    <div class="finding-card" style="background: #d8f3dc; border-left-color: #4bca81;">
+                        <div class="new-badge">ENABLE</div>
+                        <div class="finding-header">
+                            <div class="finding-icon">🏢</div>
+                            <div class="finding-title">Same Site</div>
+                        </div>
+                        <div class="finding-stat">12 multi-building sites</div>
+                        <div class="finding-description">
+                            Currently not configured. Techs visit Building A, ignore Building B same day. Recommend weight: 20.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Add 3 Work Rules</div>
+                    <div style="font-size: 0.875rem; color: #706e6b;">Auto-generated from dispatcher patterns</div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
+                    <div class="finding-card">
+                        <div class="finding-header">
+                            <div class="finding-icon">⭐</div>
+                            <div class="finding-title">VIP Account Prioritization</div>
+                        </div>
+                        <div class="finding-stat">47 Platinum accounts</div>
+                        <div class="finding-description">
+                            High-value customers get standard treatment. Dispatchers manually override 78% of the time.
+                        </div>
+                    </div>
+
+                    <div class="finding-card">
+                        <div class="finding-header">
+                            <div class="finding-icon">📍</div>
+                            <div class="finding-title">Proximity Bundling</div>
+                        </div>
+                        <div class="finding-stat">340 missed opportunities</div>
+                        <div class="finding-description">
+                            Multiple jobs within 5 miles assigned to different techs on same day.
+                        </div>
+                    </div>
+
+                    <div class="finding-card">
+                        <div class="finding-header">
+                            <div class="finding-icon">💚</div>
+                            <div class="finding-title">Repeat Customer Assignment</div>
+                        </div>
+                        <div class="finding-stat">Customer loyalty boost</div>
+                        <div class="finding-description">
+                            When customer rated tech 4.5+ stars, prefer that tech for future visits.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-brand" onclick="showScreen(3)">View Recommended Changes</button>
+                    <button class="btn btn-neutral" onclick="showScreen(1)">Back</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 3: Recommendations -->
+    <div id="screen3" class="screen">
+        <div class="header">
+            <h1>Recommended Changes</h1>
+            <div class="breadcrumb">
+                <a href="#" onclick="showScreen(1)">Policy Intelligence</a> / Changes
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">All Scheduling Objectives</div>
+                    <div style="font-size: 0.875rem; color: #706e6b;">Complete view of current vs. recommended configuration</div>
+                </div>
+
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Objective</th>
+                            <th>Current</th>
+                            <th>Recommended</th>
+                            <th>Status</th>
+                            <th>Impact</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="background: #fff4e5;">
+                            <td><strong>🚗 Minimize Travel</strong></td>
+                            <td>
+                                <div class="weight-visual">
+                                    <span>20</span>
+                                    <div class="weight-bar"><div class="weight-bar-fill" style="width: 20%;"></div></div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="weight-visual">
+                                    <span style="color: #fe9339; font-weight: 600;">35</span>
+                                    <div class="weight-bar"><div class="weight-bar-fill" style="width: 35%; background: #fe9339;"></div></div>
+                                </div>
+                            </td>
+                            <td><span style="background: #fe9339; color: #fff; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600;">TUNE</span></td>
+                            <td><span style="color: #4bca81; font-weight: 600;">-15% travel time</span></td>
+                        </tr>
+                        <tr style="background: #fff4e5;">
+                            <td><strong>🎯 Skill Preference</strong></td>
+                            <td>
+                                <div class="weight-visual">
+                                    <span>40</span>
+                                    <div class="weight-bar"><div class="weight-bar-fill" style="width: 40%;"></div></div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="weight-visual">
+                                    <span style="color: #fe9339; font-weight: 600;">25</span>
+                                    <div class="weight-bar"><div class="weight-bar-fill" style="width: 25%; background: #fe9339;"></div></div>
+                                </div>
+                            </td>
+                            <td><span style="background: #fe9339; color: #fff; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600;">TUNE</span></td>
+                            <td><span style="color: #4bca81; font-weight: 600;">Better proximity match</span></td>
+                        </tr>
+                        <tr style="background: #d8f3dc;">
+                            <td><strong>⏰ Minimize Overtime</strong></td>
+                            <td>
+                                <div class="weight-visual">
+                                    <span style="color: #706e6b;">0 (Off)</span>
+                                    <div class="weight-bar"><div class="weight-bar-fill" style="width: 0%;"></div></div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="weight-visual">
+                                    <span style="color: #4bca81; font-weight: 600;">20</span>
+                                    <div class="weight-bar"><div class="weight-bar-fill" style="width: 20%; background: #4bca81;"></div></div>
+                                </div>
+                            </td>
+                            <td><span style="background: #4bca81; color: #fff; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600;">ENABLE</span></td>
+                            <td><span style="color: #4bca81; font-weight: 600;">-$3,200/mo OT costs</span></td>
+                        </tr>
+                        <tr style="background: #d8f3dc;">
+                            <td><strong>📊 Minimize Gaps</strong></td>
+                            <td>
+                                <div class="weight-visual">
+                                    <span style="color: #706e6b;">0 (Off)</span>
+                                    <div class="weight-bar"><div class="weight-bar-fill" style="width: 0%;"></div></div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="weight-visual">
+                                    <span style="color: #4bca81; font-weight: 600;">25</span>
+                                    <div class="weight-bar"><div class="weight-bar-fill" style="width: 25%; background: #4bca81;"></div></div>
+                                </div>
+                            </td>
+                            <td><span style="background: #4bca81; color: #fff; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600;">ENABLE</span></td>
+                            <td><span style="color: #4bca81; font-weight: 600;">-2.3 hrs idle/tech/day</span></td>
+                        </tr>
+                        <tr style="background: #d8f3dc;">
+                            <td><strong>🏢 Same Site</strong></td>
+                            <td>
+                                <div class="weight-visual">
+                                    <span style="color: #706e6b;">0 (Off)</span>
+                                    <div class="weight-bar"><div class="weight-bar-fill" style="width: 0%;"></div></div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="weight-visual">
+                                    <span style="color: #4bca81; font-weight: 600;">20</span>
+                                    <div class="weight-bar"><div class="weight-bar-fill" style="width: 20%; background: #4bca81;"></div></div>
+                                </div>
+                            </td>
+                            <td><span style="background: #4bca81; color: #fff; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600;">ENABLE</span></td>
+                            <td><span style="color: #4bca81; font-weight: 600;">+8% campus completion</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>⚡ Service Priority</strong></td>
+                            <td>
+                                <div class="weight-visual">
+                                    <span>30</span>
+                                    <div class="weight-bar"><div class="weight-bar-fill" style="width: 30%;"></div></div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="weight-visual">
+                                    <span>30</span>
+                                    <div class="weight-bar"><div class="weight-bar-fill" style="width: 30%;"></div></div>
+                                </div>
+                            </td>
+                            <td><span style="background: #f3f2f2; color: #706e6b; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem;">No change</span></td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td><strong>👤 Preferred Resource</strong></td>
+                            <td>
+                                <div class="weight-visual">
+                                    <span>10</span>
+                                    <div class="weight-bar"><div class="weight-bar-fill" style="width: 10%;"></div></div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="weight-visual">
+                                    <span>10</span>
+                                    <div class="weight-bar"><div class="weight-bar-fill" style="width: 10%;"></div></div>
+                                </div>
+                            </td>
+                            <td><span style="background: #f3f2f2; color: #706e6b; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem;">No change</span></td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td><strong>⏱️ ASAP</strong></td>
+                            <td>
+                                <div class="weight-visual">
+                                    <span>15</span>
+                                    <div class="weight-bar"><div class="weight-bar-fill" style="width: 15%;"></div></div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="weight-visual">
+                                    <span>15</span>
+                                    <div class="weight-bar"><div class="weight-bar-fill" style="width: 15%;"></div></div>
+                                </div>
+                            </td>
+                            <td><span style="background: #f3f2f2; color: #706e6b; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem;">No change</span></td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td><strong>🥇 Resource Priority</strong></td>
+                            <td>
+                                <div class="weight-visual">
+                                    <span style="color: #706e6b;">0 (Off)</span>
+                                    <div class="weight-bar"><div class="weight-bar-fill" style="width: 0%;"></div></div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="weight-visual">
+                                    <span style="color: #706e6b;">0 (Off)</span>
+                                    <div class="weight-bar"><div class="weight-bar-fill" style="width: 0%;"></div></div>
+                                </div>
+                            </td>
+                            <td><span style="background: #f3f2f2; color: #706e6b; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem;">Not needed</span></td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td><strong>🎓 Skill Level</strong></td>
+                            <td>
+                                <div class="weight-visual">
+                                    <span style="color: #706e6b;">0 (Off)</span>
+                                    <div class="weight-bar"><div class="weight-bar-fill" style="width: 0%;"></div></div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="weight-visual">
+                                    <span style="color: #706e6b;">0 (Off)</span>
+                                    <div class="weight-bar"><div class="weight-bar-fill" style="width: 0%;"></div></div>
+                                </div>
+                            </td>
+                            <td><span style="background: #f3f2f2; color: #706e6b; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem;">Not needed</span></td>
+                            <td>—</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div style="margin-top: 1.5rem; padding: 1rem; background: #e8f4f8; border-radius: 4px; border-left: 4px solid #0070d2;">
+                    <strong>Summary:</strong> 2 objectives to tune | 3 objectives to enable | 5 objectives staying the same
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Add 3 New Work Rules</div>
+                    <div style="font-size: 0.875rem; color: #706e6b;">Auto-generated from dispatcher patterns</div>
+                </div>
+
+                <div class="work-rule-card">
+                    <div class="new-badge">NEW</div>
+                    <div class="rule-header">
+                        <div class="rule-icon">⭐</div>
+                        <div class="rule-title">VIP Account Prioritization</div>
+                    </div>
+                    <div class="finding-description" style="margin-bottom: 0.75rem;">
+                        When Account Tier = Platinum → increase priority by 50
+                    </div>
+                    <div class="rule-impact">-8% override rate | +12% VIP CSAT</div>
+                </div>
+
+                <div class="work-rule-card">
+                    <div class="new-badge">NEW</div>
+                    <div class="rule-header">
+                        <div class="rule-icon">📍</div>
+                        <div class="rule-title">Proximity Bundling</div>
+                    </div>
+                    <div class="finding-description" style="margin-bottom: 0.75rem;">
+                        When multiple jobs within 5 miles same day → assign to same tech
+                    </div>
+                    <div class="rule-impact">$2,100/mo savings | +12% completion rate</div>
+                </div>
+
+                <div class="work-rule-card">
+                    <div class="new-badge">NEW</div>
+                    <div class="rule-header">
+                        <div class="rule-icon">💚</div>
+                        <div class="rule-title">Repeat Customer Assignment</div>
+                    </div>
+                    <div class="finding-description" style="margin-bottom: 0.75rem;">
+                        When customer rated tech 4.5+ stars → prefer that tech
+                    </div>
+                    <div class="rule-impact">+18% CSAT | +22% first-time fix</div>
+                </div>
+            </div>
+
+            <div class="impact-hero">
+                <div class="impact-title">If Applied to Last 6 Months</div>
+                <div class="impact-grid">
+                    <div class="impact-item">
+                        <div class="impact-value">34→22%</div>
+                        <div class="impact-label">Override Rate</div>
+                    </div>
+                    <div class="impact-item">
+                        <div class="impact-value">42→36m</div>
+                        <div class="impact-label">Avg Travel</div>
+                    </div>
+                    <div class="impact-item">
+                        <div class="impact-value">+14%</div>
+                        <div class="impact-label">Daily WOs</div>
+                    </div>
+                    <div class="impact-item">
+                        <div class="impact-value">-2.3hrs</div>
+                        <div class="impact-label">Idle Time/Day</div>
+                    </div>
+                    <div class="impact-item">
+                        <div class="impact-value">$11.6K/mo</div>
+                        <div class="impact-label">Total Savings</div>
+                    </div>
+                </div>
+                <div style="margin-top: 1.5rem; text-align: center; font-size: 0.875rem; color: #1e7e34;">
+                    Travel savings: $4,200 | Overtime reduction: $3,200 | Productivity gains: $4,200
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-brand" onclick="showScreen(4)">Run Simulation Test</button>
+                <button class="btn btn-neutral" onclick="showScreen(2)">Back</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 4: Simulation Test -->
+    <div id="screen4" class="screen">
+        <div class="header">
+            <h1>Test Recommendations</h1>
+            <div class="breadcrumb">
+                <a href="#" onclick="showScreen(1)">Policy Intelligence</a> / Simulation
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Run Historical Simulation</div>
+                    <div style="font-size: 0.875rem; color: #706e6b;">Re-optimize past 6 months with new policy settings</div>
+                </div>
+
+                <div style="background: #e8f4f8; border-left: 4px solid #0070d2; padding: 1.5rem; border-radius: 4px; margin-bottom: 2rem;">
+                    <strong>How it works:</strong> We'll take your actual work orders from Nov 2025 - Apr 2026 (12,450 WOs) and re-run the optimization engine with the new policy settings. This shows you exactly what would have happened if you'd been using the recommended policy.
+                </div>
+
+                <div class="stat-row">
+                    <div class="stat-label">Simulation period</div>
+                    <div class="stat-value">November 2025 - April 2026</div>
+                </div>
+                <div class="stat-row">
+                    <div class="stat-label">Work orders to process</div>
+                    <div class="stat-value">12,450</div>
+                </div>
+                <div class="stat-row">
+                    <div class="stat-label">Technicians</div>
+                    <div class="stat-value">145</div>
+                </div>
+                <div class="stat-row">
+                    <div class="stat-label">Estimated runtime</div>
+                    <div class="stat-value">~45 seconds</div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-brand" onclick="showScreen(5); simulateProgress()">Start Simulation</button>
+                    <button class="btn btn-neutral" onclick="showScreen(3)">Back to Recommendations</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 5: Simulation Running -->
+    <div id="screen5" class="screen">
+        <div class="header">
+            <h1>Running Simulation...</h1>
+            <div class="breadcrumb">
+                <a href="#" onclick="showScreen(1)">Policy Intelligence</a> / Simulation
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Re-optimizing Historical Data</div>
+                </div>
+
+                <div style="text-align: center; padding: 3rem 0;">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">⚡</div>
+                    <div style="font-size: 1.5rem; font-weight: 300; color: #080707; margin-bottom: 2rem;">
+                        Processing 12,450 work orders...
+                    </div>
+
+                    <div style="max-width: 600px; margin: 0 auto;">
+                        <div style="background: #e0e0e0; height: 12px; border-radius: 6px; overflow: hidden; margin-bottom: 1rem;">
+                            <div id="progressBar" style="height: 100%; background: linear-gradient(90deg, #0070d2, #4bca81); width: 0%; transition: width 0.5s;"></div>
+                        </div>
+                        <div id="progressText" style="font-size: 0.875rem; color: #706e6b;">Analyzing travel patterns...</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem; padding: 1.5rem; background: #f3f2f2; border-radius: 4px;">
+                    <div style="font-size: 0.875rem; color: #706e6b; margin-bottom: 1rem;"><strong>Processing steps:</strong></div>
+                    <div class="stat-row" style="border-bottom: 1px solid #dddbda;">
+                        <div class="stat-label">✓ Load historical work orders</div>
+                        <div class="stat-value" style="color: #4bca81;">Complete</div>
+                    </div>
+                    <div class="stat-row" style="border-bottom: 1px solid #dddbda;">
+                        <div class="stat-label" id="step2">⏳ Apply new scheduling weights</div>
+                        <div class="stat-value" id="step2status" style="color: #f59331;">Running...</div>
+                    </div>
+                    <div class="stat-row" style="border-bottom: 1px solid #dddbda;">
+                        <div class="stat-label" id="step3">⏳ Apply new work rules</div>
+                        <div class="stat-value" id="step3status" style="color: #706e6b;">Pending</div>
+                    </div>
+                    <div class="stat-row">
+                        <div class="stat-label" id="step4">⏳ Calculate impact metrics</div>
+                        <div class="stat-value" id="step4status" style="color: #706e6b;">Pending</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 6: Simulation Results -->
+    <div id="screen6" class="screen">
+        <div class="header">
+            <h1>Simulation Results</h1>
+            <div class="breadcrumb">
+                <a href="#" onclick="showScreen(1)">Policy Intelligence</a> / Results
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="card">
+                <div style="text-align: center; padding: 2rem 0;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
+                    <div style="font-size: 1.75rem; font-weight: 300; color: #080707; margin-bottom: 0.5rem;">
+                        Simulation Complete
+                    </div>
+                    <div style="font-size: 1rem; color: #706e6b;">
+                        Re-optimized 12,450 work orders from Nov 2025 - Apr 2026
+                    </div>
+                </div>
+            </div>
+
+            <div class="impact-hero">
+                <div class="impact-title">Before vs. After Comparison</div>
+                <div class="impact-grid">
+                    <div class="impact-item">
+                        <div style="font-size: 0.75rem; color: #706e6b; margin-bottom: 0.5rem;">Override Rate</div>
+                        <div class="impact-value">34% → 23%</div>
+                        <div class="impact-label">-11 percentage points</div>
+                    </div>
+                    <div class="impact-item">
+                        <div style="font-size: 0.75rem; color: #706e6b; margin-bottom: 0.5rem;">Avg Travel Time</div>
+                        <div class="impact-value">42 → 37min</div>
+                        <div class="impact-label">-5 minutes per trip</div>
+                    </div>
+                    <div class="impact-item">
+                        <div style="font-size: 0.75rem; color: #706e6b; margin-bottom: 0.5rem;">Idle Time</div>
+                        <div class="impact-value">2.3 → 0.8hrs</div>
+                        <div class="impact-label">-1.5 hrs per tech/day</div>
+                    </div>
+                    <div class="impact-item">
+                        <div style="font-size: 0.75rem; color: #706e6b; margin-bottom: 0.5rem;">Daily Completion</div>
+                        <div class="impact-value">+13%</div>
+                        <div class="impact-label">+1.5 WOs per tech/day</div>
+                    </div>
+                    <div class="impact-item">
+                        <div style="font-size: 0.75rem; color: #706e6b; margin-bottom: 0.5rem;">Cost Savings</div>
+                        <div class="impact-value">$11,350/mo</div>
+                        <div class="impact-label">Travel + OT + productivity</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Detailed Breakdown</div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card" style="border-left-color: #4bca81;">
+                        <div class="metric-icon">🚗</div>
+                        <div class="metric-value">-1,240hrs</div>
+                        <div class="metric-label">Drive Time Saved</div>
+                        <div class="metric-comparison" style="color: #4bca81;">
+                            <span>206 hrs/month | $4,200 fuel savings</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card" style="border-left-color: #4bca81;">
+                        <div class="metric-icon">⏰</div>
+                        <div class="metric-value">-890hrs</div>
+                        <div class="metric-label">Overtime Reduced</div>
+                        <div class="metric-comparison" style="color: #4bca81;">
+                            <span>148 hrs/month | $3,200 OT savings</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card" style="border-left-color: #4bca81;">
+                        <div class="metric-icon">📊</div>
+                        <div class="metric-value">-1,840hrs</div>
+                        <div class="metric-label">Idle Time Eliminated</div>
+                        <div class="metric-comparison" style="color: #4bca81;">
+                            <span>307 hrs/month | +1.5 WOs/tech/day</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card" style="border-left-color: #4bca81;">
+                        <div class="metric-icon">🏢</div>
+                        <div class="metric-value">156</div>
+                        <div class="metric-label">Multi-Site Visits Bundled</div>
+                        <div class="metric-comparison" style="color: #4bca81;">
+                            <span>26 per month | Campus efficiency +8%</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card" style="border-left-color: #4bca81;">
+                        <div class="metric-icon">📍</div>
+                        <div class="metric-value">284</div>
+                        <div class="metric-label">Jobs Bundled by Proximity</div>
+                        <div class="metric-comparison" style="color: #4bca81;">
+                            <span>47 per month</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card" style="border-left-color: #4bca81;">
+                        <div class="metric-icon">⭐</div>
+                        <div class="metric-value">892</div>
+                        <div class="metric-label">VIP Accounts Prioritized</div>
+                        <div class="metric-comparison" style="color: #4bca81;">
+                            <span>Response time improved 22%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: #fff4e5; border-left: 4px solid #fe9339; padding: 1.5rem; border-radius: 4px; margin-top: 2rem;">
+                    <strong>💡 Key Insights:</strong>
+                    <ul style="margin: 0.75rem 0 0 1.5rem; line-height: 1.8;">
+                        <li>Override rate dropped 34% → 23% — new policy aligns with how dispatchers actually think</li>
+                        <li>Enabling "Minimize Gaps" recovered 1.5 hrs/tech/day — that's productive time, not wait time</li>
+                        <li>Enabling "Minimize Overtime" cut late-day scheduling by 148 hrs/month — $3,200 savings</li>
+                        <li>Enabling "Same Site" bundled 26 multi-building visits/month you were missing</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Side-by-Side Example</div>
+                    <div style="font-size: 0.875rem; color: #706e6b;">Sample day: January 15, 2026</div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 1rem 0;">
+                    <div>
+                        <div style="font-weight: 600; margin-bottom: 1rem; color: #706e6b;">❌ Old Policy (v1.0)</div>
+                        <div style="background: #fff; border: 2px solid #dddbda; border-radius: 4px; padding: 1rem;">
+                            <div class="stat-row">
+                                <div class="stat-label">Tech assigned</div>
+                                <div class="stat-value">Sarah M.</div>
+                            </div>
+                            <div class="stat-row">
+                                <div class="stat-label">Skills match</div>
+                                <div class="stat-value">98%</div>
+                            </div>
+                            <div class="stat-row">
+                                <div class="stat-label">Drive time</div>
+                                <div class="stat-value" style="color: #fe9339;">54 min</div>
+                            </div>
+                            <div class="stat-row">
+                                <div class="stat-label">Customer history</div>
+                                <div class="stat-value">None</div>
+                            </div>
+                            <div class="stat-row" style="border-bottom: none;">
+                                <div class="stat-label">Dispatcher action</div>
+                                <div class="stat-value" style="color: #fe9339;">Manually changed</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div style="font-weight: 600; margin-bottom: 1rem; color: #4bca81;">✅ New Policy (v2.0)</div>
+                        <div style="background: #d8f3dc; border: 2px solid #4bca81; border-radius: 4px; padding: 1rem;">
+                            <div class="stat-row">
+                                <div class="stat-label">Tech assigned</div>
+                                <div class="stat-value">Mike T.</div>
+                            </div>
+                            <div class="stat-row">
+                                <div class="stat-label">Skills match</div>
+                                <div class="stat-value">92%</div>
+                            </div>
+                            <div class="stat-row">
+                                <div class="stat-label">Drive time</div>
+                                <div class="stat-value" style="color: #4bca81;">18 min</div>
+                            </div>
+                            <div class="stat-row">
+                                <div class="stat-label">Customer history</div>
+                                <div class="stat-value">5★ rating from customer</div>
+                            </div>
+                            <div class="stat-row" style="border-bottom: none;">
+                                <div class="stat-label">Dispatcher action</div>
+                                <div class="stat-value" style="color: #4bca81;">No change needed</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 1rem; font-size: 0.875rem; color: #706e6b;">
+                    Old policy picked perfect skill match 54 minutes away. New policy picked nearby tech with great customer history. Saved 36 minutes of drive time.
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-brand" onclick="showScreen(7)">Apply to Production</button>
+                <button class="btn btn-neutral" onclick="alert('Full simulation report downloaded!')">Download Full Report</button>
+                <button class="btn btn-neutral" onclick="showScreen(3)">Back to Recommendations</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 7: Deploy -->
+    <div id="screen7" class="screen">
+        <div class="header">
+            <h1>Apply Changes</h1>
+            <div class="breadcrumb">
+                <a href="#" onclick="showScreen(1)">Policy Intelligence</a> / Apply
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">What Will Change</div>
+                </div>
+
+                <div class="stat-row">
+                    <div class="stat-label">New policy version</div>
+                    <div class="stat-value">v2.0 (ML Optimized)</div>
+                </div>
+                <div class="stat-row">
+                    <div class="stat-label">Weight updates</div>
+                    <div class="stat-value">2 objectives</div>
+                </div>
+                <div class="stat-row">
+                    <div class="stat-label">New work rules</div>
+                    <div class="stat-value">3 rules</div>
+                </div>
+                <div class="stat-row">
+                    <div class="stat-label">Original policy</div>
+                    <div class="stat-value">Preserved as v1.0 (can revert anytime)</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Choose Deployment Option</div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="deploy-option" onclick="alert('Sandbox test initiated!')">
+                        <div class="deploy-icon">🧪</div>
+                        <div class="deploy-title">Test in Sandbox</div>
+                        <div class="deploy-description">
+                            Apply to test org. Simulate against historical data before production.
+                        </div>
+                        <button class="btn btn-brand" style="width: 100%;">Test First</button>
+                    </div>
+
+                    <div class="deploy-option" onclick="alert('Production deployment started!')">
+                        <div class="deploy-icon">🚀</div>
+                        <div class="deploy-title">Apply to Production</div>
+                        <div class="deploy-description">
+                            Activate v2.0 now. Original policy preserved. Takes effect next optimization run.
+                        </div>
+                        <button class="btn btn-success" style="width: 100%;">Apply Now</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-neutral" onclick="showScreen(6)">Back to Results</button>
+                <button class="btn btn-neutral" onclick="showScreen(1)">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showScreen(screenNum) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById('screen' + screenNum).classList.add('active');
+            window.scrollTo(0, 0);
+        }
+
+        function simulateProgress() {
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const messages = [
+                'Loading work orders...',
+                'Applying new scheduling weights...',
+                'Processing VIP prioritization rules...',
+                'Calculating proximity bundling...',
+                'Running optimization engine...',
+                'Comparing before vs. after metrics...',
+                'Finalizing results...'
+            ];
+
+            let progress = 0;
+            let messageIndex = 0;
+
+            const interval = setInterval(() => {
+                progress += 15;
+                progressBar.style.width = progress + '%';
+
+                if (messageIndex < messages.length) {
+                    progressText.textContent = messages[messageIndex];
+                    messageIndex++;
+                }
+
+                // Update step status
+                if (progress >= 30) {
+                    document.getElementById('step2').innerHTML = '✓ Apply new scheduling weights';
+                    document.getElementById('step2status').innerHTML = 'Complete';
+                    document.getElementById('step2status').style.color = '#4bca81';
+                    document.getElementById('step3').innerHTML = '⏳ Apply new work rules';
+                    document.getElementById('step3status').innerHTML = 'Running...';
+                    document.getElementById('step3status').style.color = '#f59331';
+                }
+
+                if (progress >= 60) {
+                    document.getElementById('step3').innerHTML = '✓ Apply new work rules';
+                    document.getElementById('step3status').innerHTML = 'Complete';
+                    document.getElementById('step3status').style.color = '#4bca81';
+                    document.getElementById('step4').innerHTML = '⏳ Calculate impact metrics';
+                    document.getElementById('step4status').innerHTML = 'Running...';
+                    document.getElementById('step4status').style.color = '#f59331';
+                }
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    document.getElementById('step4').innerHTML = '✓ Calculate impact metrics';
+                    document.getElementById('step4status').innerHTML = 'Complete';
+                    document.getElementById('step4status').style.color = '#4bca81';
+                    setTimeout(() => showScreen(6), 500);
+                }
+            }, 600);
+        }
+    </script>
+</body>
+</html>
